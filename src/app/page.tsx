@@ -1,113 +1,118 @@
+'use client'
 import Image from "next/image";
+import * as React from 'react';
+const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+const useDeviceSize = () => {
+
+  const [width, setWidth] = React.useState(0)
+  const [height, setHeight] = React.useState(0)
+
+  const handleWindowResize = () => {
+    setWidth(window.innerWidth);
+    setHeight(window.innerHeight);
+  }
+
+  React.useEffect(() => {
+    // component is mounted and window is available
+    handleWindowResize();
+    window.addEventListener('resize', handleWindowResize);
+    // unsubscribe from the event on component unmount
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, []);
+
+  return [width, height]
+
+}
+
+var renderCount = 0;
+
+function VideoScroll({curFrame} : {curFrame: React.RefObject<number>}) {
+  const vid = React.useRef<HTMLVideoElement>(null);
+  vid.current?.setAttribute("autobuffer", "autobuffer");
+  const frameRate = 60;
+  let zero = 0;
+  renderCount +=1;
+  // console.log(renderCount);
+  if(vid.current){
+    // dynamically set the page height according to video length
+    vid.current.addEventListener('loadedmetadata', function() {
+      //setHeight.style.height = Math.floor(vid.duration) * playbackConst + "px";
+    });
+      // Use requestAnimationFrame for smooth playback
+    var scrollPlay = (vid: HTMLVideoElement, timeStamp: number)=>{
+      // lower numbers = faster playback
+      //; sleep(1/frameRate);
+      console.log(timeStamp);
+      var playbackConst = 500; 
+      var frameNumber  = (curFrame.current?curFrame.current:0)/playbackConst;
+      vid.currentTime = Math.max(frameNumber, 0);
+      window.requestAnimationFrame((t)=> scrollPlay(vid, t));
+    };
+  
+    window.requestAnimationFrame((t)=> {
+      zero = t;
+      if(vid.current){
+        scrollPlay(vid.current, t);
+      }
+    });
+  }
+  return (
+    <video id="v0" ref={vid} tabIndex={0} preload="preload">
+      <source type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" src="https://www.apple.com/media/us/mac-pro/2013/16C1b6b5-1d91-4fef-891e-ff2fc1c1bb58/videos/macpro_main_desktop.mp4"></source>
+    </video>
+  )
+}
+
+
+function ScrollArea({scrollPos} : {scrollPos : React.RefObject<number>}) {
+  const [count, setCount] = React.useState(0);
+  const [width, height] = useDeviceSize();
+  const ref = React.useRef<HTMLDivElement>(null);
+  const frameRef = React.useRef<number>(0);
+  frameRef.current = height- (scrollPos.current?scrollPos.current:0);
+  let screenTop = ref.current?.getBoundingClientRect().top;
+  screenTop = screenTop?screenTop:0;
+  const viewportOverlayStyle = {"opacity": Math.min(0.8, (screenTop+height/2-200)/300) } as React.CSSProperties;
+
+  var frameNumber = 0, // start video at frame 0
+  // get page height from video duration
+  setHeight = document.getElementById("set-height");
+  return (
+    <div ref={ref} className="scroll-animated-section">
+        <div className="headline">
+          <h1>Free your desktop. <br/> And your apps will follow. {screenTop}</h1>
+        </div>
+        <div className="scroll-container">
+          <div className="sticky-element">
+            <div className="viewport-overlay" style={viewportOverlayStyle}></div>
+            <VideoScroll curFrame={frameRef}/>
+          </div>
+        </div>
+    </div>
+      
+  );
+}
 
 export default function Home() {
+  let areaHeight = 5000;
+  const scrollPos = React.useRef(0);
+  React.useEffect(function mount() {
+    function onScroll() {
+      scrollPos.current = window.scrollY;
+    }
+
+    window.addEventListener("scroll", onScroll);
+
+    return function unMount() {
+      window.removeEventListener("scroll", onScroll);
+    };
+  });
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <>
+      <h1>Welcome to my app</h1>
+      <div style={{height: "150vh"}}></div>
+      <ScrollArea scrollPos={scrollPos}/>
+      <div style={{height: "150vh"}}></div>
+    </>
   );
 }
