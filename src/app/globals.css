@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap');
+
+h1 {
+  font-family: "Noto Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 900;
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;
+  text-align: center;
+}
+
 :root{
   --headline-margin-top: 40vh;
   --headline-height: 200px;
@@ -9,6 +21,11 @@
 
 html {
 
+}
+
+body {
+  margin: 0;
+  padding: 0;
 }
 
 div {
