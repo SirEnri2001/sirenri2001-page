@@ -30,12 +30,7 @@ var renderCount = 0;
 
 function VideoScroll({scrollYStarts, scrollYEnds, trimStartSeconds, trimEndSseconds} : {scrollYStarts: number, scrollYEnds: number, trimStartSeconds?: number, trimEndSseconds?:number}) {
   const vid = React.createRef<HTMLVideoElement>();
-  const frameRate = 60;
-  renderCount +=1;
-  // console.log(scrollYEnds);
-  // console.log(scrollYStarts);
   React.useEffect(()=>{
-    var playbackConst = 500; 
     const videoLength = vid.current?.duration==null?0:vid.current?.duration;
     vid?.current?.setAttribute("autobuffer", "autobuffer");
     window.onscroll = (event)=>{
@@ -43,17 +38,15 @@ function VideoScroll({scrollYStarts, scrollYEnds, trimStartSeconds, trimEndSseco
         return;
       }
       var v : HTMLVideoElement = vid.current;
-      v.currentTime = Math.max(videoLength*(window.scrollY - scrollYStarts)/(scrollYEnds - scrollYStarts + 1), 0);
-      //console.log(v.currentTime);
+      const startsSecond = trimStartSeconds?trimStartSeconds:0;
+      const endsSecond = trimEndSseconds?trimEndSseconds:videoLength;
+
+      v.currentTime = Math.max(((endsSecond - startsSecond)*(window.scrollY - scrollYStarts)/(scrollYEnds - scrollYStarts)+startsSecond), 0);
     };
-    // dynamically set the page height according to video length
-    // vid.current.addEventListener('loadedmetadata', function() {
-    //   //setHeight.style.height = Math.floor(vid.duration) * playbackConst + "px";
-    // });
   });
   return (
     <video id="v0" ref={vid} tabIndex={0} preload="preload">
-      <source type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" src="https://www.apple.com/media/us/mac-pro/2013/16C1b6b5-1d91-4fef-891e-ff2fc1c1bb58/videos/macpro_main_desktop.mp4"></source>
+      <source type="video/mp4" src="output.mp4"></source>
     </video>
   )
 }
@@ -65,13 +58,15 @@ function ScrollArea({scrollPos} : {scrollPos : React.RefObject<number>}) {
   const ref = React.useRef<HTMLDivElement>(null);
   const [videoScrollYStart, setVideoScrollYStart] = React.useState(0);
   const [videoScrollYEnd, setVideoScrollYEnd] = React.useState(0);
+  const headingVerticalTransform = {transform: `translate(0px, 0px)`};
   React.useEffect(()=>{
     setFrameNum(height- (scrollPos.current?scrollPos.current:0));
     if(ref.current){
-      setVideoScrollYStart(ref.current?.getBoundingClientRect().top+window.innerHeight);
-      setVideoScrollYEnd(ref.current?.getBoundingClientRect().bottom);
-      console.log(videoScrollYStart);
-      console.log(videoScrollYEnd);
+      setVideoScrollYStart(ref.current?.getBoundingClientRect().top - document.body.getBoundingClientRect().top - height);
+      setVideoScrollYEnd(ref.current?.getBoundingClientRect().bottom - document.body.getBoundingClientRect().top);
+    }
+    window.onscroll = (event)=>{
+      
     }
   });
 
@@ -80,13 +75,13 @@ function ScrollArea({scrollPos} : {scrollPos : React.RefObject<number>}) {
   const viewportOverlayStyle = {"opacity": Math.min(0.8, (screenTop+height/2-200)/300) } as React.CSSProperties;
   return (
     <div ref={ref} className="scroll-animated-section">
-        <div className="headline">
+        <div className="headline" style={headingVerticalTransform}>
           <h1>Free your desktop. <br/> And your apps will follow. {screenTop}</h1>
         </div>
         <div className="scroll-container">
           <div className="sticky-element">
             <div className="viewport-overlay" style={viewportOverlayStyle}></div>
-            <VideoScroll scrollYStarts={videoScrollYStart} scrollYEnds={videoScrollYEnd}/>
+            <VideoScroll scrollYStarts={videoScrollYStart} scrollYEnds={videoScrollYEnd} trimEndSseconds={20} trimStartSeconds={0}/>
           </div>
         </div>
     </div>
